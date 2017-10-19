@@ -169,6 +169,7 @@ def main():
     app.installEventFilter(window)
     app.exec_()
     atexit.register(controller.write_config)
+    atexit.register(controller.cleanup_tmp_files)
 
 
 

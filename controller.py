@@ -5,6 +5,7 @@ import logging
 #import functools
 
 
+import os
 import time
 import webbrowser
 #from pprint import pprint
@@ -57,6 +58,8 @@ class Controller(QObject):
         super(Controller, self).__init__()
         logging.info('Local path: ' + local_path)
         self.view = []
+        self.tmp_place = None
+        self.tmp_files = []
 
         #this flag is only for development only, Development = True, Production = False
         self.development_flag = False
@@ -228,6 +231,9 @@ class Controller(QObject):
 
         if self.is_multimaterial() and not self.is_single_material_mode():
             self.add_wipe_tower()
+
+    def set_tmp_place(self, place):
+        self.tmp_place = place
 
     def update_object_extruders(self):
         self.view.update_object_extruders_cb()
@@ -505,6 +511,20 @@ class Controller(QObject):
         with open(self.app_config.config_path, 'w') as configfile:
             config.write(configfile)
 
+    def get_tmp_file(self, filename):
+        if filename not in self.tmp_files:
+            self.tmp_files.append(filename)
+
+        return self.tmp_place + filename
+
+    def cleanup_tmp_files(self):
+
+        for f in self.tmp_files:
+            fp = self.tmp_place + f
+
+            if os.path.exists(fp):
+                os.remove(fp)
+
     def set_basic_settings(self):
         self.advance_settings = False
         self.view.object_variable_layer_box.setVisible(False)
@@ -538,7 +558,7 @@ class Controller(QObject):
         if filename:
             self.gcode = GCode(filename, self, self.set_gcode, self.set_saved_gcode)
         else:
-            self.gcode = GCode(self.app_config.tmp_place + 'out.gcode', self, self.set_gcode, self.set_saved_gcode)
+            self.gcode = GCode(self.get_tmp_file('out.gcode'), self, self.set_gcode, self.set_saved_gcode)
 
         self.view.set_cancel_of_loading_gcode_file()
         self.status = 'loading_gcode'
@@ -1146,7 +1166,7 @@ class Controller(QObject):
         try:
             self.status = "saving_gcode"
             self.view.saving_gcode()
-            #copyfile(self.app_config.tmp_place + "out.gcode", filename_out)
+            #copyfile(self.get_tmp_file("out.gcode"), filename_out)
             self.gcode.set_color_change_data(color_change_data)
             self.gcode.write_with_changes_in_thread(self.gcode.filename, filename_out, self.set_progress_bar)
 
@@ -1302,11 +1322,11 @@ class Controller(QObject):
     def generate_gcode(self):
         self.set_progress_bar(int((100. / 9.)))
         if self.scene.models:
-            self.save_whole_scene_to_one_prusa_file(self.app_config.tmp_place + "tmp.prusa")
+            self.save_whole_scene_to_one_prusa_file(self.get_tmp_file("tmp.prusa"))
             #if self.is_multimaterial() and not self.is_single_material_mode():
-            #    self.save_whole_scene_to_one_prusa_file(self.app_config.tmp_place + "tmp.prusa")
+            #    self.save_whole_scene_to_one_prusa_file(self.get_tmp_file("tmp.prusa"))
             #else:
-            #    self.scene.save_whole_scene_to_one_stl_file(self.app_config.tmp_place + "tmp.stl")
+            #    self.scene.save_whole_scene_to_one_stl_file(self.get_tmp_file("tmp.stl"))
             self.slicer_manager.slice()
 
     def gcode_generated(self):

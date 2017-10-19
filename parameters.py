@@ -342,6 +342,9 @@ class AppParameters(object):
         #print(self.config_path)
 
 
+        if self.controller:
+            self.controller.set_tmp_place(self.tmp_place)
+
         self.config.read(self.config_path)
 
         self.first_run()
@@ -437,11 +440,11 @@ class AppParameters(object):
             return False
         else:
 
-            with open(self.tmp_place+self.printers_filename, 'wb') as out_file:
+            with open(self.controller.get_tmp_file(self.printers_filename), 'wb') as out_file:
                 #shutil.copyfileobj(r, out_file)
                 out_file.write(r.data)
 
-            with open(self.tmp_place+self.printers_filename, 'r') as in_file:
+            with open(self.controller.get_tmp_file(self.printers_filename), 'r') as in_file:
                 printers_data = json.load(in_file)
                 materials_files_list = [printers_data['printers'][i]['material_parameters_file'] for i in
                                     printers_data['printers'] if i not in ['default']]
@@ -452,13 +455,13 @@ class AppParameters(object):
 
             for i in materials_files_list:
                 r_mat = self.http.request('GET', self.json_settings_url + i)
-                with open(self.tmp_place+i, 'wb') as out_file:
+                with open(self.controller.get_tmp_file(i), 'wb') as out_file:
                     out_file.write(r_mat.data)
         return True
 
     def check_versions(self):
         old = self.user_folder + self.printers_filename
-        new = self.tmp_place + self.printers_filename
+        new = self.controller.get_tmp_file(self.printers_filename)
         #print(old)
         #print(new)
         #out = self.get_actual_version(old, new)
@@ -480,14 +483,14 @@ class AppParameters(object):
             copyfile(new, self.user_folder + self.printers_filename)
 
         for i in new_material_list:
-            new_material_version = self.get_materials_info(self.tmp_place + i)
+            new_material_version = self.get_materials_info(self.controller.get_tmp_file(i))
             old_material_version = self.get_materials_info(self.user_folder + i)
             if new_material_version:
                 if old_material_version:
                     if new_material_version > old_material_version:
-                        copyfile(self.tmp_place + i, self.user_folder + i)
+                        copyfile(self.controller.get_tmp_file(i), self.user_folder + i)
                 else:
-                    copyfile(self.tmp_place + i, self.user_folder + i)
+                    copyfile(self.controller.get_tmp_file(i), self.user_folder + i)
             else:
                 self.use_default_files()
 

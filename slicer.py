@@ -109,7 +109,7 @@ class Slic3rEngineRunner(QObject):
         self.is_running = True
         self.controller = controller
 
-        self.gcode = GCode(self.controller.app_config.tmp_place + 'out.gcode', self.controller, None, None)
+        self.gcode = GCode(self.controller.get_tmp_file('out.gcode'), self.controller, None, None)
 
         system_platform = platform.system()
         if system_platform in ['Linux']:
@@ -241,23 +241,23 @@ class Slic3rEngineRunner(QObject):
 
 
     def slice(self):
-        self.save_configuration(self.controller.app_config.tmp_place + 'prusacontrol.ini')
+        self.save_configuration(self.controller.get_tmp_file('prusacontrol.ini'))
         self.process = subprocess.Popen(
-                    self.slicer_place + [self.controller.app_config.tmp_place + 'tmp.prusa', '--load',
-                                         self.controller.app_config.tmp_place + 'prusacontrol.ini', '--output',
-                                         self.controller.app_config.tmp_place + 'out.gcode', '--dont-arrange'],
+                    self.slicer_place + [self.controller.get_tmp_file('tmp.prusa'), '--load',
+                                         self.controller.get_tmp_file('prusacontrol.ini'), '--output',
+                                         self.controller.get_tmp_file('out.gcode'), '--dont-arrange'],
                     stdout=subprocess.PIPE)
 
         #if self.controller.is_multimaterial() and not self.controller.is_single_material_mode():
         #    self.process = subprocess.Popen(
-        #        self.slicer_place + [self.controller.app_config.tmp_place + 'tmp.prusa', '--load',
-        #                             self.controller.app_config.tmp_place + 'prusacontrol.ini', '--output',
-        #                             self.controller.app_config.tmp_place + 'out.gcode', '--dont-arrange'],
+        #        self.slicer_place + [self.controller.get_tmp_file('tmp.prusa'), '--load',
+        #                             self.controller.get_tmp_file('prusacontrol.ini'), '--output',
+        #                             self.controller.get_tmp_file('out.gcode'), '--dont-arrange'],
         #        stdout=subprocess.PIPE)
         #else:
-        #    self.process = subprocess.Popen(self.slicer_place + [self.controller.app_config.tmp_place + 'tmp.stl', '--load',
-        #                            self.controller.app_config.tmp_place + 'prusacontrol.ini', '--output',
-        #                            self.controller.app_config.tmp_place + 'out.gcode', '--dont-arrange'],
+        #    self.process = subprocess.Popen(self.slicer_place + [self.controller.get_tmp_file('tmp.stl'), '--load',
+        #                            self.controller.get_tmp_file('prusacontrol.ini'), '--output',
+        #                            self.controller.get_tmp_file('out.gcode'), '--dont-arrange'],
         #                           stdout=subprocess.PIPE)
         self.check_progress()
 
